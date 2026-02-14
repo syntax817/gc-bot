@@ -1,10 +1,28 @@
-<script>
-  async function ask(question) {
-    const r = await fetch("/api/chat", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ question })
-    });
-    return await r.json();
-  }
-</script>
+<!doctype html>
+<html>
+  <body>
+    <h1>gc-bot</h1>
+    <textarea id="q" style="width:100%;height:120px" placeholder="Ask..."></textarea>
+    <button id="ask">Ask</button>
+    <pre id="a"></pre>
+
+    <script>
+      document.getElementById("ask").onclick = async () => {
+        const question = document.getElementById("q").value.trim();
+        if (!question) return;
+
+        document.getElementById("a").textContent = "Thinking...";
+
+        const r = await fetch("/api/chat", {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ question })
+        });
+
+        const data = await r.json().catch(() => ({}));
+        document.getElementById("a").textContent =
+          r.ok ? (data.answer || "") : `Error ${r.status}: ${JSON.stringify(data)}`;
+      };
+    </script>
+  </body>
+</html>
