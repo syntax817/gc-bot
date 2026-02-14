@@ -1,0 +1,10 @@
+<script>
+  async function ask(question) {
+    const r = await fetch("/api/chat", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ question })
+    });
+    return await r.json();
+  }
+</script>
