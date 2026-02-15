@@ -1,28 +1,76 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-  <body>
-    <h1>gc-bot</h1>
-    <textarea id="q" style="width:100%;height:120px" placeholder="Ask..."></textarea>
-    <button id="ask">Ask</button>
-    <pre id="a"></pre>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gc-bot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 20px;
+    }
 
-    <script>
-      document.getElementById("ask").onclick = async () => {
-        const question = document.getElementById("q").value.trim();
-        if (!question) return;
+    textarea {
+      width: 100%;
+      height: 120px;
+      font-size: 16px;
+    }
 
-        document.getElementById("a").textContent = "Thinking...";
+    button {
+      margin-top: 10px;
+      padding: 8px 14px;
+      font-size: 16px;
+      cursor: pointer;
+    }
 
-        const r = await fetch("/functions/chat", {
+    pre {
+      margin-top: 20px;
+      background: #f4f4f4;
+      padding: 12px;
+      white-space: pre-wrap;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>gc-bot</h1>
+
+  <textarea id="q" placeholder="Ask something..."></textarea>
+  <br />
+  <button id="ask">Ask</button>
+
+  <pre id="a"></pre>
+
+  <script>
+    document.getElementById("ask").onclick = async () => {
+      const question = document.getElementById("q").value.trim();
+      if (!question) return;
+
+      document.getElementById("a").textContent = "Thinking...";
+
+      try {
+        const response = await fetch("/.netlify/functions/chat", {
           method: "POST",
-          headers: {"Content-Type":"application/json"},
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question })
         });
 
-        const data = await r.json().catch(() => ({}));
-        document.getElementById("a").textContent =
-          r.ok ? (data.answer || "") : `Error ${r.status}: ${JSON.stringify(data)}`;
-      };
-    </script>
-  </body>
+        const data = await response.json();
+
+        if (response.ok) {
+          document.getElementById("a").textContent = data.answer || "";
+        } else {
+          document.getElementById("a").textContent =
+            "Error " + response.status + ": " + JSON.stringify(data);
+        }
+      } catch (err) {
+        document.getElementById("a").textContent = "Request failed.";
+      }
+    };
+  </script>
+
+</body>
 </html>

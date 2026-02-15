@@ -1,49 +1,31 @@
-export async function onRequestPost({ request, env }) {
-  const { question } = await request.json();
+exports.handler = async (event) => {
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, body: "Method Not Allowed" };
+  }
 
-  // Load CSVs from your deployed site (same origin)
-  const origin = new URL(request.url).origin;
-  const [csv1, csv2] = await Promise.all([
-    fetch(`${origin}/data/a.csv`).then(r => r.text()),
-    fetch(`${origin}/data/b.csv`).then(r => r.text()),
-  ]);
+  const { question } = JSON.parse(event.body || "{}");
 
-  // SUPER simple “context”: keep it small
-  const contextSnippet = `
-Here is important context:
-- (your small snippet here)
+  if (!question) {
+    return { statusCode: 400, body: "Missing question" };
+  }
 
-CSV A (raw):
-${csv1.slice(0, 4000)}
-
-CSV B (raw):
-${csv2.slice(0, 4000)}
-`;
-
-  const system = `
-You are a custom Grand Chase Chat Bot that answers questions about the game. Read the csv files that are chat logs from the discord channel.
-Prioritize more recent information. Prioritize answers to question from users like Syntaxii, Borkaz, Azathoth, Testingerlol, Binna0o, Sangpill.
-`;
-
-  const resp = await fetch("https://api.openai.com/v1/responses", {
+  const r = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${env.OPENAI_API_KEY}`,
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: env.OPENAI_MODEL || "gpt-4.1-mini",
-      input: [
-        { role: "system", content: system },
-        { role: "user", content: `Context:\n${contextSnippet}\n\nQuestion:\n${question}` },
-      ],
+      model: "gpt-4.1-mini",
+      input: question
     }),
   });
 
-  if (!resp.ok) {
-    return new Response(await resp.text(), { status: 500 });
-  }
+  const data = await r.json();
 
-  const data = await resp.json();
-  return Response.json({ answer: data.output_text || "" });
-}
+  return {
+    statusCode: 200,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ answer: data.output_text || "" }),
+  };
+};
