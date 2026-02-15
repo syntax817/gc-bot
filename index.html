@@ -13,7 +13,7 @@
 
         document.getElementById("a").textContent = "Thinking...";
 
-        const r = await fetch("/api/chat", {
+        const r = await fetch("/functions/chat", {
           method: "POST",
           headers: {"Content-Type":"application/json"},
           body: JSON.stringify({ question })
